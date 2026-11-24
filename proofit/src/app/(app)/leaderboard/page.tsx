@@ -1,3 +1,5 @@
+import { formatDate, formatNumber } from "@/lib/i18n/core";
+import { getT } from "@/lib/i18n/server";
 import { Crown, Trophy, UserCheck, UserPlus, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -11,7 +13,10 @@ import { followAction } from "@/lib/actions/social";
 import { requireUser } from "@/lib/auth";
 import { leaderboard, type LeaderboardPeriod, type LeaderboardScope } from "@/lib/services/social";
 
-export const metadata: Metadata = { title: "Rankings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Rankings") };
+}
 
 const PERIODS: { v: LeaderboardPeriod; label: string }[] = [
   { v: "week", label: "This week" },
@@ -20,6 +25,7 @@ const PERIODS: { v: LeaderboardPeriod; label: string }[] = [
 ];
 
 export default async function LeaderboardPage({ searchParams }: { searchParams: Promise<{ scope?: string; period?: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const sp = await searchParams;
   const scope: LeaderboardScope = sp.scope === "friends" ? "friends" : "global";
@@ -32,31 +38,31 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <PageHeader eyebrow="Rankings" title="Leaderboard" subtitle="XP earned from verified check-ins, streaks, completions and wins." />
+      <PageHeader eyebrow={t("Rankings")} title={t("Leaderboard")} subtitle={t("XP earned from verified check-ins, streaks, completions and wins.")} />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <nav className="glass inline-flex rounded-2xl p-1" aria-label="Scope">
+        <nav className="glass inline-flex rounded-2xl p-1" aria-label={t("Scope")}>
           <Link href={href("global", period)} className={tab(scope === "global")} aria-current={scope === "global" ? "page" : undefined}>
-            Global
+            {t("Global")}
           </Link>
           <Link href={href("friends", period)} className={tab(scope === "friends")} aria-current={scope === "friends" ? "page" : undefined}>
-            Friends
+            {t("Friends")}
           </Link>
         </nav>
-        <nav className="glass inline-flex rounded-2xl p-1" aria-label="Period">
+        <nav className="glass inline-flex rounded-2xl p-1" aria-label={t("Period")}>
           {PERIODS.map((p) => (
             <Link key={p.v} href={href(scope, p.v)} className={tab(period === p.v)} aria-current={period === p.v ? "page" : undefined}>
-              {p.label}
+              {t(p.label)}
             </Link>
           ))}
         </nav>
       </div>
 
       {rows.length <= 1 && scope === "friends" ? (
-        <EmptyState icon={Users} title="Add friends to compete" text="Follow people from the global leaderboard and they'll show up here." action={<LinkButton href={href("global", period)}>Browse global</LinkButton>} />
+        <EmptyState icon={Users} title={t("Add friends to compete")} text={t("Follow people from the global leaderboard and they'll show up here.")} action={<LinkButton href={href("global", period)}>{t("Browse global")}</LinkButton>} />
       ) : (
         <>
           {podium.length === 3 && (
-            <section className="mx-auto mb-6 grid max-w-2xl grid-cols-3 items-end gap-2 sm:gap-4" aria-label="Top three">
+            <section className="mx-auto mb-6 grid max-w-2xl grid-cols-3 items-end gap-2 sm:gap-4" aria-label={t("Top three")}>
               {[podium[1], podium[0], podium[2]].map((r, i) => {
                 const place = r.rank;
                 const h = place === 1 ? "h-36 sm:h-44" : place === 2 ? "h-28 sm:h-36" : "h-24 sm:h-28";
@@ -67,7 +73,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                       {place === 1 && <Crown className="absolute -top-6 left-1/2 h-6 w-6 -translate-x-1/2 text-gold drop-shadow-[0_0_10px_#fbbf24]" aria-hidden />}
                       <Avatar name={r.profile.displayName} color={r.profile.avatarColor} size={place === 1 ? 64 : 52} ring={r.isMe} />
                     </div>
-                    <p className="max-w-full truncate text-center text-xs font-semibold sm:text-sm">{r.isMe ? "You" : r.profile.displayName.split(" ")[0]}</p>
+                    <p className="max-w-full truncate text-center text-xs font-semibold sm:text-sm">{r.isMe ? t("You") : r.profile.displayName.split(" ")[0]}</p>
                     <div className={cn("flex w-full flex-col items-center justify-start rounded-t-2xl bg-gradient-to-b pt-3 ring-1", h, tone)}>
                       <span className="font-display text-2xl font-bold">{place}</span>
                       <span className="text-xs text-muted tabular-nums">{r.xp} XP</span>
@@ -88,20 +94,20 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
                       {r.profile.displayName} {r.isMe && <span className="text-violet-2">(you)</span>}
                     </span>
                     <span className="block text-xs text-subtle">
-                      Lv {r.level} · @{r.profile.username}
+                      {t("Lv {n}", { n: r.level })} · @{r.profile.username}
                     </span>
                   </span>
                 </Link>
-                <span className="font-display font-bold tabular-nums">{r.xp.toLocaleString("en")}</span>
-                <span className="hidden text-xs text-subtle sm:inline">XP</span>
+                <span className="font-display font-bold tabular-nums">{formatNumber(r.xp, t.locale)}</span>
+                <span className="hidden text-xs text-subtle sm:inline">{t("XP")}</span>
                 {!r.isMe && (
                   <ActionButton
                     size="icon"
                     variant={r.following ? "ghost" : "secondary"}
                     className="h-9 w-9"
                     action={followAction.bind(null, r.profile.id, !r.following)}
-                    aria-label={r.following ? `Unfollow ${r.profile.displayName}` : `Follow ${r.profile.displayName}`}
-                    title={r.following ? "Following — click to unfollow" : "Follow"}
+                    aria-label={r.following ? t("Unfollow {name}", { name: r.profile.displayName }) : t("Follow {name}", { name: r.profile.displayName })}
+                    title={r.following ? t("Following — click to unfollow") : t("Follow")}
                   >
                     {r.following ? <UserCheck className="h-4 w-4 text-green-300" /> : <UserPlus className="h-4 w-4" />}
                   </ActionButton>
@@ -111,7 +117,7 @@ export default async function LeaderboardPage({ searchParams }: { searchParams: 
           </Card>
           {!mine && (
             <p className="mt-4 flex items-center gap-2 text-sm text-muted">
-              <Trophy className="h-4 w-4" aria-hidden /> Earn XP this {period === "all" ? "season" : period} to enter the rankings.
+              <Trophy className="h-4 w-4" aria-hidden /> {t(period === "week" ? "Earn XP this week to enter the rankings." : period === "month" ? "Earn XP this month to enter the rankings." : "Earn XP to enter the rankings.")}
             </p>
           )}
         </>

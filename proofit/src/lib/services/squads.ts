@@ -48,7 +48,7 @@ export async function createSquad(userId: string, input: { name: string; descrip
   if (input.isPrivate && !ent.limits.privateSquads) throw new AppError("Private squads are a Premium feature.");
   const owned = (await store.listSquadMembers({ userId })).filter((m) => m.role === "owner").length;
   if (owned >= ent.limits.maxSquadsOwned)
-    throw new AppError(`Your plan allows ${ent.limits.maxSquadsOwned} squad${ent.limits.maxSquadsOwned > 1 ? "s" : ""}. Upgrade for more.`);
+    throw new AppError("Your plan doesn't allow more squads ({n}). Upgrade for more.", undefined, { n: ent.limits.maxSquadsOwned });
   let squad: Squad | null = null;
   for (let i = 0; i < 5 && !squad; i++) {
     try {

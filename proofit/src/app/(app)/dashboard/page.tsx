@@ -1,3 +1,5 @@
+import { getT } from "@/lib/i18n/server";
+import { formatNumber } from "@/lib/i18n/core";
 import { Compass, Flame, PartyPopper, Plus, Swords, Target, Trophy, Users, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -22,14 +24,18 @@ import { getEntitlements } from "@/lib/services/entitlements";
 import { xpEarnedOn } from "@/lib/services/progress";
 import { myRank, pendingInvites } from "@/lib/services/social";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Dashboard") };
+}
 
 function greeting() {
   const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: appTimeZone() }).format(new Date()));
-  return h < 5 ? "Still up" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  return h < 5 ? "Still up" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; // translated at call site
 }
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const today = dayKey();
   const [active, daily, duels, invites, rank, earnedToday, ent] = await Promise.all([
@@ -55,56 +61,56 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <Card glow className="flex items-center gap-4 p-5 animate-pop">
           <PartyPopper className="h-8 w-8 shrink-0 text-violet-2" aria-hidden />
           <div>
-            <p className="font-display text-lg font-bold">Welcome to PROOFIT, {me.displayName.split(" ")[0]}!</p>
-            <p className="text-sm text-muted">Join your first challenge below — your first check-in unlocks an achievement.</p>
+            <p className="font-display text-lg font-bold">{t("Welcome to PROOFIT, {name}!", { name: me.displayName.split(" ")[0] })}</p>
+            <p className="text-sm text-muted">{t("Join your first challenge below — your first check-in unlocks an achievement.")}</p>
           </div>
         </Card>
       )}
 
       <header className="animate-rise">
         <p className="text-sm text-muted">
-          {greeting()}, <span className="text-fg">{me.displayName.split(" ")[0]}</span> 👋
+          {t(greeting())}, <span className="text-fg">{me.displayName.split(" ")[0]}</span> 👋
         </p>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight sm:text-4xl">
           {todo > 0 ? (
             <>
-              {todo} check-in{todo > 1 ? "s" : ""} <span className="text-gradient">left today</span>
+              {t.p(todo, "{n} check-in", "{n} check-ins")} <span className="text-gradient">{t("left today")}</span>
             </>
           ) : active.length ? (
             <>
-              All done today. <span className="text-gradient">Legend.</span>
+              {t("All done today.")}{" "}<span className="text-gradient">{t("Legend.")}</span>
             </>
           ) : (
             <>
-              Ready for a <span className="text-gradient">challenge?</span>
+              {t("Ready for a")}{" "}<span className="text-gradient">{t("challenge?")}</span>
             </>
           )}
         </h1>
       </header>
 
       {/* Stats hero */}
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-[1.3fr_1fr_1fr]" aria-label="Your stats">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-[1.3fr_1fr_1fr]" aria-label={t("Your stats")}>
         <Card glow className="col-span-2 flex items-center gap-5 p-5 animate-rise md:col-span-1">
-          <ProgressRing value={lv.progress} size={112} label={`Level ${lv.level}, ${Math.round(lv.progress * 100)}% to next`}>
+          <ProgressRing value={lv.progress} size={112} label={t("Level {n}, {pct}% to next", { n: lv.level, pct: Math.round(lv.progress * 100) })}>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">Level</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("Level")}</p>
               <p className="font-display text-3xl font-bold leading-none">{lv.level}</p>
             </div>
           </ProgressRing>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-widest text-violet-2">{levelTitle(lv.level)}</p>
-            <p className="mt-1 font-display text-2xl font-bold">{me.xp.toLocaleString("en")} XP</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-2">{t(levelTitle(lv.level))}</p>
+            <p className="mt-1 font-display text-2xl font-bold">{formatNumber(me.xp, t.locale)} XP</p>
             <p className="mt-1 text-sm text-muted">
-              {lv.xpToNext} XP to level {lv.level + 1}
+              {t("{xp} XP to level {n}", { xp: lv.xpToNext, n: lv.level + 1 })}
             </p>
             <div className="mt-3">
               <div className="mb-1 flex justify-between text-xs text-subtle">
-                <span>Today</span>
+                <span>{t("Today")}</span>
                 <span className="tabular-nums">
                   {earnedToday}/{XP_RULES.dailyXpCap} XP
                 </span>
               </div>
-              <ProgressBar value={earnedToday / XP_RULES.dailyXpCap} tone="gold" className="h-1.5" label="Daily XP" />
+              <ProgressBar value={earnedToday / XP_RULES.dailyXpCap} tone="gold" className="h-1.5" label={t("Daily XP")} />
             </div>
           </div>
         </Card>
@@ -112,22 +118,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <span className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-hard/25 blur-2xl" aria-hidden />
           <Flame className="h-7 w-7 text-hard drop-shadow-[0_0_10px_rgb(249_115_22/.8)]" aria-hidden />
           <p className="mt-2 font-display text-3xl font-bold sm:mt-3 sm:text-4xl">{streak}</p>
-          <p className="text-sm text-muted">day streak · best {me.longestStreak}</p>
-          <p className="mt-2 hidden text-xs text-subtle sm:block">{nextBonus > 0 ? `Tomorrow's streak bonus: +${nextBonus} XP` : `Bonus XP starts on day ${XP_RULES.streakBonus.startsAtDay}`}</p>
+          <p className="text-sm text-muted">{t("day streak · best {n}", { n: me.longestStreak })}</p>
+          <p className="mt-2 hidden text-xs text-subtle sm:block">{nextBonus > 0 ? t("Tomorrow's streak bonus: +{n} XP", { n: nextBonus }) : t("Bonus XP starts on day {n}", { n: XP_RULES.streakBonus.startsAtDay })}</p>
         </Card>
         <Card className="relative overflow-hidden p-4 animate-rise [animation-delay:120ms] sm:p-5">
           <span className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gold/20 blur-2xl" aria-hidden />
           <Trophy className="h-7 w-7 text-gold drop-shadow-[0_0_10px_rgb(251_191_36/.7)]" aria-hidden />
           <p className="mt-2 font-display text-3xl font-bold sm:mt-3 sm:text-4xl">{rank ? `#${rank}` : "—"}</p>
-          <p className="text-sm text-muted">weekly global rank</p>
+          <p className="text-sm text-muted">{t("weekly global rank")}</p>
           <Link href="/leaderboard" className="mt-2 inline-block text-xs font-semibold text-violet-2 hover:underline">
-            View rankings →
+            {t("View rankings →")}
           </Link>
         </Card>
       </section>
 
       {/* Quick actions */}
-      <section aria-label="Quick actions" className="grid grid-cols-4 gap-2 sm:gap-3">
+      <section aria-label={t("Quick actions")} className="grid grid-cols-4 gap-2 sm:gap-3">
         {[
           { href: "/create", label: "Create", I: Plus },
           { href: "/duels", label: "Duel", I: Swords },
@@ -138,20 +144,20 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet/25 to-electric/15 text-violet-2 ring-1 ring-violet/25 transition group-hover:shadow-[0_0_20px_-4px_#8b5cf6]">
               <I className="h-5 w-5" aria-hidden />
             </span>
-            {label}
+            {t(label)}
           </Link>
         ))}
       </section>
 
       <InvitesPanel invites={invites} duels={duelInvites} />
 
-      <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
         <section aria-labelledby="active-title">
           <SectionTitle
-            title={`Active challenges (${active.length}/${ent.limits.maxActiveChallenges})`}
+            title={`${t("Active challenges")} (${active.length}/${ent.limits.maxActiveChallenges})`}
             action={
               <Link href="/explore" className="text-sm font-semibold text-violet-2 hover:underline">
-                Find more
+                {t("Find more")}
               </Link>
             }
           />
@@ -162,37 +168,37 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               ))}
             </div>
           ) : (
-            <EmptyState icon={Target} title="No active challenges" text="Pick something small to start — an easy daily challenge is perfect." action={<LinkButton href="/explore">Explore challenges</LinkButton>} />
+            <EmptyState icon={Target} title={t("No active challenges")} text={t("Pick something small to start — an easy daily challenge is perfect.")} action={<LinkButton href="/explore">{t("Explore challenges")}</LinkButton>} />
           )}
         </section>
 
         <div className="space-y-8">
           {daily && (
             <section aria-labelledby="daily-title">
-              <SectionTitle title="Daily challenge" subtitle="New one every day" />
+              <SectionTitle title={t("Daily challenge")} subtitle={t("New one every day")} />
               <Card glow className="relative overflow-hidden p-5">
                 <span className="absolute -bottom-10 -right-10 h-36 w-36 rounded-full bg-violet/30 blur-3xl animate-glow" aria-hidden />
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-gold" aria-hidden />
-                  <span className="text-xs font-semibold uppercase tracking-widest text-gold">Today only</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-gold">{t("Today only")}</span>
                   <DifficultyBadge difficulty={daily.difficulty} className="ml-auto" />
                 </div>
-                <h3 className="mt-3 font-display text-xl font-bold">{daily.title}</h3>
-                <p className="mt-1 text-sm text-muted">{daily.description}</p>
+                <h3 className="mt-3 font-display text-xl font-bold">{t(daily.title)}</h3>
+                <p className="mt-1 text-sm text-muted">{t(daily.description)}</p>
                 <div className="mt-4 flex items-center gap-3">
                   {daily.joined ? (
                     <LinkButton href={`/challenges/${daily.id}#checkin`} size="sm">
-                      Check in
+                      {t("Check in")}
                     </LinkButton>
                   ) : (
-                    <ActionButton size="sm" action={joinChallengeAction.bind(null, daily.id)} successTitle="Joined today's challenge!">
-                      Join · +{daily.xpReward} XP
+                    <ActionButton size="sm" action={joinChallengeAction.bind(null, daily.id)} successTitle={t("Joined today's challenge!")}>
+                      {t("Join · +{n} XP", { n: daily.xpReward })}
                     </ActionButton>
                   )}
                   <Link href={`/challenges/${daily.id}`} className="text-sm text-muted hover:text-fg">
-                    Details
+                    {t("Details")}
                   </Link>
-                  <span className="ml-auto text-xs text-subtle">{daily.participants} joined</span>
+                  <span className="ml-auto text-xs text-subtle">{t("{n} joined", { n: daily.participants })}</span>
                 </div>
               </Card>
             </section>
@@ -200,10 +206,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
           <section aria-labelledby="duels-title">
             <SectionTitle
-              title="Live duels"
+              title={t("Live duels")}
               action={
                 <Link href="/duels" className="text-sm font-semibold text-violet-2 hover:underline">
-                  All duels
+                  {t("All duels")}
                 </Link>
               }
             />
@@ -215,21 +221,21 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <Link key={v.duel.id} href={`/duels/${v.duel.id}`} className="glass flex items-center gap-3 rounded-2xl p-4 transition hover:border-line-strong">
                       <Avatar name={v.opponent.displayName} color={v.opponent.avatarColor} size={38} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">vs {v.opponent.displayName}</p>
-                        <p className="truncate text-xs text-muted">{v.challenge?.title}</p>
+                        <p className="truncate text-sm font-semibold">{t("vs {name}", { name: v.opponent.displayName })}</p>
+                        <p className="truncate text-xs text-muted">{v.challenge ? t(v.challenge.title) : ""}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-display text-lg font-bold tabular-nums">
                           {v.myScore}–{v.theirScore}
                         </p>
-                        <p className={lead > 0 ? "text-xs text-green-300" : lead < 0 ? "text-xs text-red-300" : "text-xs text-muted"}>{lead > 0 ? "Leading" : lead < 0 ? "Behind" : "Tied"}</p>
+                        <p className={lead > 0 ? "text-xs text-green-300" : lead < 0 ? "text-xs text-red-300" : "text-xs text-muted"}>{t(lead > 0 ? "Leading" : lead < 0 ? "Behind" : "Tied")}</p>
                       </div>
                     </Link>
                   );
                 })}
               </div>
             ) : (
-              <EmptyState icon={Swords} title="No live duels" text="Challenge a friend head-to-head." action={<LinkButton href="/duels" size="sm" variant="secondary">Start a duel</LinkButton>} />
+              <EmptyState icon={Swords} title={t("No live duels")} text={t("Challenge a friend head-to-head.")} action={<LinkButton href="/duels" size="sm" variant="secondary">{t("Start a duel")}</LinkButton>} />
             )}
           </section>
         </div>

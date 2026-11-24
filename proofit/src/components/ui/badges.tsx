@@ -1,10 +1,14 @@
+"use client";
+
 import { Lock, Globe, Users } from "lucide-react";
 import { CATEGORY_META, DIFFICULTY_META } from "@/lib/config/taxonomy";
 import type { Category, Difficulty } from "@/lib/types";
+import { useT } from "@/lib/i18n/client";
 import { cn } from "./cn";
 import { Icon } from "./icon";
 
 export function DifficultyBadge({ difficulty, size = "sm", className }: { difficulty: Difficulty; size?: "sm" | "md"; className?: string }) {
+  const t = useT();
   const m = DIFFICULTY_META[difficulty];
   return (
     <span
@@ -18,27 +22,29 @@ export function DifficultyBadge({ difficulty, size = "sm", className }: { diffic
       )}
     >
       <span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} aria-hidden />
-      {m.label}
+      {t(m.label)}
     </span>
   );
 }
 
 export function CategoryChip({ category, className }: { category: Category; className?: string }) {
+  const t = useT();
   const m = CATEGORY_META[category];
   return (
     <span className={cn("inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-xs text-muted ring-1 ring-line", className)}>
       <Icon name={m.icon} className="h-3.5 w-3.5" />
-      {m.label}
+      {t(m.label)}
     </span>
   );
 }
 
 export function VisibilityChip({ visibility, squad }: { visibility: "public" | "private"; squad?: boolean }) {
+  const t = useT();
   const I = squad ? Users : visibility === "private" ? Lock : Globe;
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-xs text-muted ring-1 ring-line">
       <I className="h-3.5 w-3.5" aria-hidden />
-      {squad ? "Squad" : visibility === "private" ? "Private" : "Public"}
+      {t(squad ? "Squad" : visibility === "private" ? "Private" : "Public")}
     </span>
   );
 }

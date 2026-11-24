@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { CreditCard, Crown, FlaskConical } from "lucide-react";
 import { useTransition } from "react";
 import { demoTogglePremiumAction, openBillingPortalAction, startCheckoutAction } from "@/lib/actions/billing";
@@ -8,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
 export function CheckoutButton({ label }: { label: string }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const toast = useToast();
   return (
@@ -31,6 +34,7 @@ export function CheckoutButton({ label }: { label: string }) {
 }
 
 export function PortalButton() {
+  const t = useT();
   const [pending, start] = useTransition();
   const toast = useToast();
   return (
@@ -46,15 +50,16 @@ export function PortalButton() {
         })
       }
     >
-      Manage billing
+      {t("Manage billing")}
     </Button>
   );
 }
 
 export function DemoToggle({ isPremium }: { isPremium: boolean }) {
+  const t = useT();
   return (
     <ActionButton variant="secondary" className="w-full" action={demoTogglePremiumAction} icon={<FlaskConical className="h-4 w-4" />}>
-      {isPremium ? "Demo: switch back to Free" : "Demo: preview Premium (no payment)"}
+      {isPremium ? t("Demo: switch back to Free") : t("Demo: preview Premium (no payment)")}
     </ActionButton>
   );
 }

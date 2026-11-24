@@ -1,3 +1,5 @@
+import { formatDate, formatNumber } from "@/lib/i18n/core";
+import { getT } from "@/lib/i18n/server";
 import { Lock } from "lucide-react";
 import type { Metadata } from "next";
 import { TIER_STYLE } from "@/components/social/profile-view";
@@ -9,16 +11,20 @@ import { ProgressBar } from "@/components/ui/progress";
 import { requireUser } from "@/lib/auth";
 import { profileOverview } from "@/lib/services/profile";
 
-export const metadata: Metadata = { title: "Achievements" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Achievements") };
+}
 
 export default async function AchievementsPage() {
+  const t = await getT();
   const me = await requireUser();
   const o = (await profileOverview(me.id, me.id))!;
   const unlocked = o.achievements.filter((a) => a.unlockedAt).length;
   return (
     <>
-      <PageHeader eyebrow="Achievements" title="Your trophy case" subtitle={`${unlocked} of ${o.achievements.length} badges unlocked. Each one adds a one-time XP bonus.`} />
-      <ProgressBar value={unlocked / o.achievements.length} tone="gold" className="mb-8 h-2.5" label="Achievements unlocked" />
+      <PageHeader eyebrow={t("Achievements")} title={t("Your trophy case")} subtitle={t("{n} of {total} badges unlocked. Each one adds a one-time XP bonus.", { n: unlocked, total: o.achievements.length })} />
+      <ProgressBar value={unlocked / o.achievements.length} tone="gold" className="mb-8 h-2.5" label={t("Achievements unlocked")} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {o.achievements.map((a, i) => (
           <div
@@ -33,12 +39,12 @@ export default async function AchievementsPage() {
               {a.unlockedAt ? <Icon name={a.icon} className="h-7 w-7" /> : <Lock className="h-6 w-6 opacity-60" aria-hidden />}
             </span>
             <div className="min-w-0">
-              <p className={cn("font-display font-bold", a.unlockedAt ? "text-fg" : "text-muted")}>{a.name}</p>
-              <p className="text-sm text-muted">{a.description}</p>
+              <p className={cn("font-display font-bold", a.unlockedAt ? "text-fg" : "text-muted")}>{t(a.name)}</p>
+              <p className="text-sm text-muted">{t(a.description)}</p>
               <div className="mt-2 flex items-center gap-2">
-                <Pill className="capitalize">{a.tier}</Pill>
+                <Pill>{t(a.tier[0].toUpperCase() + a.tier.slice(1))}</Pill>
                 <span className="text-xs text-subtle">+{a.xpBonus} XP</span>
-                {a.unlockedAt && <span className="text-xs text-subtle">· {new Date(a.unlockedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>}
+                {a.unlockedAt && <span className="text-xs text-subtle">· {formatDate(a.unlockedAt, t.locale)}</span>}
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { Lock, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -11,9 +12,13 @@ import { getEntitlements } from "@/lib/services/entitlements";
 import { listSquadsFor } from "@/lib/services/squads";
 import type { Squad } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Squads" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Squads") };
+}
 
-function SquadTile({ s, count, joinable }: { s: Squad; count: number; joinable?: boolean }) {
+async function SquadTile({ s, count, joinable }: { s: Squad; count: number; joinable?: boolean }) {
+  const t = await getT();
   const hue = [...s.name].reduce((h, c) => h + c.charCodeAt(0), 0) % 360;
   return (
     <div className="glass group flex flex-col rounded-2xl p-5 transition hover:border-line-strong">
@@ -23,17 +28,17 @@ function SquadTile({ s, count, joinable }: { s: Squad; count: number; joinable?:
         </span>
         <span className="min-w-0">
           <span className="flex items-center gap-1.5 font-display font-bold group-hover:underline">
-            {s.name} {s.isPrivate && <Lock className="h-3.5 w-3.5 text-muted" aria-label="Private" />}
+            {s.name} {s.isPrivate && <Lock className="h-3.5 w-3.5 text-muted" aria-label={t("Private")} />}
           </span>
           <span className="block text-xs text-muted">
-            {count} member{count === 1 ? "" : "s"}
+            {t.p(count, "{n} member", "{n} members")}
           </span>
         </span>
       </Link>
-      <p className="mt-3 line-clamp-2 text-sm text-muted">{s.description || "No description yet."}</p>
+      <p className="mt-3 line-clamp-2 text-sm text-muted">{s.description || t("No description yet.")}</p>
       {joinable && (
         <ActionButton size="sm" variant="secondary" className="mt-4 self-start" action={joinSquadAction.bind(null, s.id)}>
-          Join squad
+          {t("Join squad")}
         </ActionButton>
       )}
     </div>
@@ -41,37 +46,38 @@ function SquadTile({ s, count, joinable }: { s: Squad; count: number; joinable?:
 }
 
 export default async function SquadsPage() {
+  const t = await getT();
   const me = await requireUser();
   const [{ mine, discover, counts }, ent] = await Promise.all([listSquadsFor(me.id), getEntitlements(me.id)]);
   return (
     <>
-      <PageHeader eyebrow="Squads" title="Stronger together" subtitle="Groups with shared challenges and weekly leaderboards." />
-      <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+      <PageHeader eyebrow={t("Squads")} title={t("Stronger together")} subtitle={t("Groups with shared challenges and weekly leaderboards.")} />
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-8">
           <section>
-            <SectionTitle title="Your squads" />
+            <SectionTitle title={t("Your squads")} />
             {mine.length ? (
               <div className="grid gap-3 sm:grid-cols-2">{mine.map((s) => <SquadTile key={s.id} s={s} count={counts[s.id]} />)}</div>
             ) : (
-              <EmptyState icon={Users} title="No squad yet" text="Create one for your friends or join a public squad below." />
+              <EmptyState icon={Users} title={t("No squad yet")} text={t("Create one for your friends or join a public squad below.")} />
             )}
           </section>
           <section>
-            <SectionTitle title="Discover" subtitle="Public squads you can join" />
+            <SectionTitle title={t("Discover")} subtitle={t("Public squads you can join")} />
             {discover.length ? (
               <div className="grid gap-3 sm:grid-cols-2">{discover.map((s) => <SquadTile key={s.id} s={s} count={counts[s.id]} joinable />)}</div>
             ) : (
-              <p className="text-sm text-muted">No other public squads right now.</p>
+              <p className="text-sm text-muted">{t("No other public squads right now.")}</p>
             )}
           </section>
         </div>
         <aside className="space-y-4 lg:sticky lg:top-8 lg:self-start">
           <Card className="p-5">
-            <h2 className="mb-3 font-display font-bold">Have an invite code?</h2>
+            <h2 className="mb-3 font-display font-bold">{t("Have an invite code?")}</h2>
             <JoinByCodeForm />
           </Card>
           <Card glow className="p-5">
-            <h2 className="mb-4 font-display text-lg font-bold">Create a squad</h2>
+            <h2 className="mb-4 font-display text-lg font-bold">{t("Create a squad")}</h2>
             <CreateSquadForm isPremium={ent.isPremium} />
           </Card>
         </aside>

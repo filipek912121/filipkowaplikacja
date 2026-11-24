@@ -70,6 +70,26 @@ The webhook (signature-verified) is the **only** thing that upgrades a plan. Pre
 
 All three Supabase variables must be set to leave demo mode.
 
+## Languages (Polski / English)
+
+The UI is fully bilingual. **Polish is the default**; visitors whose browser prefers English get English. Everyone can switch with the PL/EN toggle (sidebar, Settings, Profile, landing and login pages); the choice is stored in a cookie.
+
+- English source strings are the translation keys; Polish lives in `src/lib/i18n/pl.ts`.
+- Server components: `const t = await getT()`. Client components: `const t = useT()`.
+- Plurals: `t.p(n, "{n} day", "{n} days")` with Polish `one|few|many` forms in the dictionary (`1 dzień | 2 dni | 5 dni`).
+- Official/seed challenge content is translated too; user-written content is shown as written.
+
+## Install on a phone
+
+PROOFIT is a **PWA** (web app manifest + icons): once deployed (e.g. Vercel), open the link on the phone and choose **"Add to Home screen"** (Android Chrome) or **Share → "Add to Home Screen"** (iPhone Safari). It then opens full-screen with its own icon, like a native app.
+
+### Android APK
+
+An APK of PROOFIT is a thin wrapper around the deployed URL (the app needs its server), so deploy first. Then either:
+
+- **PWABuilder (easiest, works from a phone):** go to pwabuilder.com, paste your deployed URL, choose **Android → Generate**. You get a signed `.apk`/`.aab` (Trusted Web Activity) to install or upload to Google Play.
+- **Bubblewrap (CLI):** `npx @bubblewrap/cli init --manifest https://<your-domain>/manifest.webmanifest` then `npx @bubblewrap/cli build` (needs JDK + Android SDK).
+
 ## Deploying (Vercel)
 
 1. Push the repo, import it in Vercel and set **Root Directory = `proofit`**.

@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { Check, ExternalLink, X } from "lucide-react";
 import { useActionState } from "react";
 import { reviewProofAction } from "@/lib/actions/challenges";
@@ -8,6 +10,7 @@ import { DifficultyBadge } from "@/components/ui/badges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
+import { formatDate } from "@/lib/i18n/core";
 import type { ActionResult, Difficulty, ProofKind } from "@/lib/types";
 
 export interface ReviewCardData {
@@ -23,6 +26,7 @@ export interface ReviewCardData {
 }
 
 export function ReviewCard({ d }: { d: ReviewCardData }) {
+  const t = useT();
   const toast = useToast();
   // Toast from inside the action: the card unmounts when the refreshed queue no longer contains it.
   const [state, action, pending] = useActionState(async (prev: ActionResult | null, fd: FormData) => {
@@ -35,7 +39,7 @@ export function ReviewCard({ d }: { d: ReviewCardData }) {
     <article className="glass flex flex-col overflow-hidden rounded-2xl">
       {d.fileUrl && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={d.fileUrl} alt={`Proof photo from ${d.submitter.displayName}`} className="max-h-80 w-full bg-black/40 object-contain" />
+        <img src={d.fileUrl} alt={t("Proof photo from {name}", { name: d.submitter.displayName })} className="max-h-80 w-full bg-black/40 object-contain" />
       )}
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-3">
@@ -43,15 +47,15 @@ export function ReviewCard({ d }: { d: ReviewCardData }) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{d.submitter.displayName}</p>
             <p className="text-xs text-subtle">
-              @{d.submitter.username} · {d.day ?? new Date(d.createdAt).toLocaleDateString("en-GB")}
+              @{d.submitter.username} · {d.day ?? formatDate(d.createdAt, t.locale)}
             </p>
           </div>
           <DifficultyBadge difficulty={d.challenge.difficulty} />
         </div>
-        <p className="mt-3 text-sm font-semibold">{d.challenge.title}</p>
+        <p className="mt-3 text-sm font-semibold">{t(d.challenge.title)}</p>
         <ul className="mt-1 text-xs text-muted">
-          {d.challenge.tasks.map((t) => (
-            <li key={t}>• {t}</li>
+          {d.challenge.tasks.map((task) => (
+            <li key={task}>• {t(task)}</li>
           ))}
         </ul>
         {d.text && <blockquote className="mt-3 rounded-xl bg-white/[0.04] p-3 text-sm ring-1 ring-line">{d.text}</blockquote>}
@@ -60,19 +64,19 @@ export function ReviewCard({ d }: { d: ReviewCardData }) {
             <ExternalLink className="h-4 w-4 shrink-0" aria-hidden /> {d.url}
           </a>
         )}
-        <p className="mt-3 text-xs text-subtle">Judge whether the evidence reasonably shows the daily tasks were done. When unsure, reject with a note.</p>
+        <p className="mt-3 text-xs text-subtle">{t("Judge whether the evidence reasonably shows the daily tasks were done. When unsure, reject with a note.")}</p>
         <form action={action} className="mt-auto space-y-2 pt-4">
           <input type="hidden" name="proofId" value={d.proofId} />
           <label htmlFor={`note-${d.proofId}`} className="sr-only">
-            Note for {d.submitter.displayName}
+            {t("Note for {name}", { name: d.submitter.displayName })}
           </label>
-          <Input id={`note-${d.proofId}`} name="note" maxLength={200} placeholder="Optional note to the submitter" />
+          <Input id={`note-${d.proofId}`} name="note" maxLength={200} placeholder={t("Optional note to the submitter")} />
           <div className="grid grid-cols-2 gap-2">
             <Button name="decision" value="reject" variant="danger" loading={pending} icon={<X className="h-4 w-4" />}>
-              Reject
+              {t("Reject")}
             </Button>
             <Button name="decision" value="approve" variant="success" loading={pending} icon={<Check className="h-4 w-4" />}>
-              Approve
+              {t("Approve")}
             </Button>
           </div>
         </form>

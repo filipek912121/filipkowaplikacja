@@ -1,8 +1,10 @@
+import { getT } from "@/lib/i18n/server";
 import { ArrowLeft, Calendar, Camera, CircleCheck, Crown, PartyPopper, ShieldCheck, Swords, Users, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { durationLabel } from "@/components/challenges/challenge-card";
+import { STATUS_LABEL } from "@/components/social/profile-view";
 import { CheckInForm } from "@/components/challenges/check-in-form";
 import { ActionButton } from "@/components/ui/action-button";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,10 +23,12 @@ import { getStore } from "@/lib/data";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const ch = await getStore().getChallenge(id.slice(0, 64));
-  return { title: ch && ch.visibility === "public" ? ch.title : "Challenge" };
+  const t = await getT();
+  return { title: ch && ch.visibility === "public" ? t(ch.title) : t("Challenge") };
 }
 
 export default async function ChallengePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const { id } = await params;
   const { created } = await searchParams;
@@ -41,14 +45,14 @@ export default async function ChallengePage({ params, searchParams }: { params: 
   return (
     <div className="space-y-6">
       <Link href="/explore" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Explore
+        <ArrowLeft className="h-4 w-4" aria-hidden />{" "}{t("Explore")}
       </Link>
 
       {created && (
         <Card glow className="flex items-center gap-3 p-4 animate-pop" role="status">
           <PartyPopper className="h-6 w-6 text-violet-2" aria-hidden />
           <p className="text-sm">
-            <span className="font-semibold">Challenge launched!</span> {c.isTemplate ? "Saved as a template — use it from the Create page." : "Share it with friends or start a duel on it."}
+            <span className="font-semibold">{t("Challenge launched!")}</span> {c.isTemplate ? t("Saved as a template — use it from the Create page.") : t("Share it with friends or start a duel on it.")}
           </p>
         </Card>
       )}
@@ -60,19 +64,19 @@ export default async function ChallengePage({ params, searchParams }: { params: 
             <DifficultyBadge difficulty={c.difficulty} size="md" />
             <CategoryChip category={c.category} />
             <VisibilityChip visibility={c.visibility} squad={Boolean(c.squadId)} />
-            {c.isTemplate && <Pill tone="gold">Template</Pill>}
+            {c.isTemplate && <Pill tone="gold">{t("Template")}</Pill>}
           </div>
-          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">{c.title}</h1>
-          <p className="mt-3 max-w-2xl text-muted">{c.description}</p>
+          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">{t(c.title)}</h1>
+          <p className="mt-3 max-w-2xl text-muted">{t(c.description)}</p>
           <p className="mt-3 text-sm text-subtle">
-            Created by <span className="text-fg">{c.creatorName ?? "a member"}</span>
+            {t("Created by")}{" "}<span className="text-fg">{c.creatorName ?? t("a member")}</span>
           </p>
           <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { I: Zap, k: "XP per day", v: `${c.xpReward} XP`, cls: m.text },
-              { I: Calendar, k: "Duration", v: durationLabel(c.durationDays) },
-              { I: Users, k: "Participants", v: String(c.participants) },
-              { I: c.requiresProof ? Camera : CircleCheck, k: "Verification", v: c.requiresProof ? "Proof required" : "Self check-in" },
+              { I: Zap, k: t("XP per day"), v: `${c.xpReward} XP`, cls: m.text },
+              { I: Calendar, k: t("Duration"), v: durationLabel(c.durationDays, t) },
+              { I: Users, k: t("Participants"), v: String(c.participants) },
+              { I: c.requiresProof ? Camera : CircleCheck, k: t("Verification"), v: c.requiresProof ? t("Proof required") : t("Self check-in") },
             ].map(({ I, k, v, cls }) => (
               <div key={k} className="rounded-2xl bg-white/[0.04] p-3 ring-1 ring-line">
                 <dt className="flex items-center gap-1.5 text-xs text-muted">
@@ -85,19 +89,19 @@ export default async function ChallengePage({ params, searchParams }: { params: 
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-6">
           <Card className="p-5 sm:p-6" id="checkin">
             {isActive && d.window ? (
               <>
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="font-display text-lg font-bold">Today&apos;s check-in</h2>
+                  <h2 className="font-display text-lg font-bold">{t("Today's check-in")}</h2>
                   <span className="text-sm text-muted tabular-nums">
-                    {p!.checkins}/{c.durationDays} done
+                    {t("{done}/{total} done", { done: p!.checkins, total: c.durationDays })}
                   </span>
                 </div>
-                <ProgressBar value={p!.checkins / c.durationDays} tone={c.difficulty} label="Challenge progress" />
-                <ol className="my-5 flex flex-wrap gap-1.5" aria-label="Daily progress">
+                <ProgressBar value={p!.checkins / c.durationDays} tone={c.difficulty} label={t("Challenge progress")} />
+                <ol className="my-5 flex flex-wrap gap-1.5" aria-label={t("Daily progress")}>
                   {days.map((day, i) => {
                     const st = byDay.get(day);
                     const isToday = day === today;
@@ -105,8 +109,8 @@ export default async function ChallengePage({ params, searchParams }: { params: 
                     return (
                       <li
                         key={day}
-                        title={`Day ${i + 1} · ${day}`}
-                        aria-label={`Day ${i + 1}: ${st === "approved" ? "done" : st === "pending" ? "pending" : past ? "missed" : isToday ? "today" : "upcoming"}`}
+                        title={`${t("Day {n}", { n: i + 1 })} · ${day}`}
+                        aria-label={`${t("Day {n}", { n: i + 1 })}: ${t(st === "approved" ? "done" : st === "pending" ? "pending" : past ? "missed" : isToday ? "today" : "upcoming")}`}
                         className={cn(
                           "grid h-8 w-8 place-items-center rounded-lg text-[11px] font-bold ring-1",
                           st === "approved" && cn(m.dot, "text-black ring-transparent"),
@@ -129,7 +133,7 @@ export default async function ChallengePage({ params, searchParams }: { params: 
                     today={d.todayCompletion && d.todayCompletion.status !== "rejected" ? { status: d.todayCompletion.status, xp: d.todayCompletion.xpAwarded } : null}
                   />
                 ) : (
-                  <p className="text-sm text-muted">Check-ins are closed for this window.</p>
+                  <p className="text-sm text-muted">{t("Check-ins are closed for this window.")}</p>
                 )}
               </>
             ) : (
@@ -137,54 +141,54 @@ export default async function ChallengePage({ params, searchParams }: { params: 
                 {p?.status === "completed" ? (
                   <>
                     <CircleCheck className="mx-auto mb-2 h-10 w-10 text-easy" aria-hidden />
-                    <h2 className="font-display text-xl font-bold">You completed this challenge!</h2>
-                    <p className="mt-1 text-sm text-muted">Run it again to keep the habit going.</p>
+                    <h2 className="font-display text-xl font-bold">{t("You completed this challenge!")}</h2>
+                    <p className="mt-1 text-sm text-muted">{t("Run it again to keep the habit going.")}</p>
                   </>
                 ) : p?.status === "failed" ? (
                   <>
-                    <h2 className="font-display text-xl font-bold">This run ended</h2>
+                    <h2 className="font-display text-xl font-bold">{t("This run ended")}</h2>
                     <p className="mt-1 text-sm text-muted">
-                      You checked in {p.checkins} of {c.durationDays} days. Every attempt counts — try again.
+                      {t("You checked in {done} of {total} days. Every attempt counts — try again.", { done: p.checkins, total: c.durationDays })}
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2 className="font-display text-xl font-bold">{c.isTemplate ? "This is a template" : "Ready to commit?"}</h2>
+                    <h2 className="font-display text-xl font-bold">{c.isTemplate ? t("This is a template") : t("Ready to commit?")}</h2>
                     <p className="mt-1 text-sm text-muted">
-                      {c.isTemplate ? "Templates can't be joined. Create a live challenge from it." : `Check in once a day for ${durationLabel(c.durationDays)}. Starts today.`}
+                      {c.isTemplate ? t("Templates can't be joined. Create a live challenge from it.") : t("Check in once a day for {duration}. Starts today.", { duration: durationLabel(c.durationDays, t) })}
                     </p>
                   </>
                 )}
                 <div className="mt-5 flex flex-col items-center gap-2">
                   {c.isTemplate ? (
-                    <LinkButton href={`/create?template=${c.id}`}>Use template</LinkButton>
+                    <LinkButton href={`/create?template=${c.id}`}>{t("Use template")}</LinkButton>
                   ) : d.slotsLeft > 0 ? (
-                    <ActionButton size="lg" action={joinChallengeAction.bind(null, c.id)} successTitle="Challenge joined!" icon={<Zap className="h-5 w-5" />}>
-                      {p ? "Start again" : "Join challenge"}
+                    <ActionButton size="lg" action={joinChallengeAction.bind(null, c.id)} successTitle={t("Challenge joined!")} icon={<Zap className="h-5 w-5" />}>
+                      {p ? t("Start again") : t("Join challenge")}
                     </ActionButton>
                   ) : (
                     <>
-                      <p className="text-sm text-orange-300">You&apos;ve hit your active challenge limit.</p>
+                      <p className="text-sm text-orange-300">{t("You've hit your active challenge limit.")}</p>
                       {d.plan === "free" && (
                         <LinkButton href="/premium" variant="gold" icon={<Crown className="h-4 w-4" />}>
-                          Upgrade for more slots
+                          {t("Upgrade for more slots")}
                         </LinkButton>
                       )}
                     </>
                   )}
-                  {!c.isTemplate && d.slotsLeft > 0 && <p className="text-xs text-subtle">{d.slotsLeft} free slot{d.slotsLeft === 1 ? "" : "s"} on your {d.plan} plan</p>}
+                  {!c.isTemplate && d.slotsLeft > 0 && <p className="text-xs text-subtle">{t.p(d.slotsLeft, "{n} free slot on your {plan} plan", "{n} free slots on your {plan} plan", { plan: d.plan === "premium" ? "Premium" : t("Free") })}</p>}
                 </div>
               </div>
             )}
           </Card>
 
           <Card className="p-5 sm:p-6">
-            <SectionTitle title="Daily tasks" />
+            <SectionTitle title={t("Daily tasks")} />
             <ul className="space-y-2">
-              {c.tasks.map((t, i) => (
-                <li key={t} className="flex items-center gap-3 rounded-xl bg-white/[0.03] px-4 py-3 text-sm ring-1 ring-line">
+              {c.tasks.map((task, i) => (
+                <li key={task} className="flex items-center gap-3 rounded-xl bg-white/[0.03] px-4 py-3 text-sm ring-1 ring-line">
                   <span className={cn("grid h-6 w-6 place-items-center rounded-md text-xs font-bold", m.bg, m.text)}>{i + 1}</span>
-                  {t}
+                  {t(task)}
                 </li>
               ))}
             </ul>
@@ -200,22 +204,22 @@ export default async function ChallengePage({ params, searchParams }: { params: 
           {!c.isTemplate && (
             <Card className="space-y-2 p-5">
               <LinkButton href={`/duels?challenge=${c.id}`} variant="secondary" className="w-full" icon={<Swords className="h-4 w-4" />}>
-                Duel a friend on this
+                {t("Duel a friend on this")}
               </LinkButton>
               {d.isCreator && c.requiresProof && (
                 <LinkButton href="/review" variant="secondary" className="w-full" icon={<ShieldCheck className="h-4 w-4" />}>
-                  Review submitted proofs
+                  {t("Review submitted proofs")}
                 </LinkButton>
               )}
               {isActive && (
-                <ActionButton variant="ghost" className="w-full" action={leaveChallengeAction.bind(null, c.id)} confirm="Leave this challenge? Your current run will end.">
-                  Leave challenge
+                <ActionButton variant="ghost" className="w-full" action={leaveChallengeAction.bind(null, c.id)} confirm={t("Leave this challenge? Your current run will end.")}>
+                  {t("Leave challenge")}
                 </ActionButton>
               )}
             </Card>
           )}
           <Card className="p-5">
-            <SectionTitle title="Participants" subtitle={`${c.participants} in total`} />
+            <SectionTitle title={t("Participants")} subtitle={t("{n} in total", { n: c.participants })} />
             {d.roster.length ? (
               <ul className="space-y-1">
                 {d.roster.map((r) => (
@@ -224,9 +228,9 @@ export default async function ChallengePage({ params, searchParams }: { params: 
                       <Avatar name={r.profile.displayName} color={r.profile.avatarColor} size={34} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">
-                          {r.profile.displayName} {r.profile.id === me.id && <span className="text-subtle">(you)</span>}
+                          {r.profile.displayName} {r.profile.id === me.id && <span className="text-subtle">{t("(you)")}</span>}
                         </span>
-                        <span className="block text-xs capitalize text-subtle">{r.participation.status}</span>
+                        <span className="block text-xs text-subtle">{t(STATUS_LABEL[r.participation.status])}</span>
                       </span>
                       <span className="text-sm tabular-nums text-muted">{r.participation.checkins} ✓</span>
                     </Link>
@@ -234,7 +238,7 @@ export default async function ChallengePage({ params, searchParams }: { params: 
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted">Nobody yet — be the first.</p>
+              <p className="text-sm text-muted">{t("Nobody yet — be the first.")}</p>
             )}
           </Card>
         </div>

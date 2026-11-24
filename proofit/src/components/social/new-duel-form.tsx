@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { Swords } from "lucide-react";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { createDuelAction } from "@/lib/actions/social";
@@ -19,6 +21,7 @@ export function NewDuelForm({
   challenges: { id: string; title: string; durationDays: number }[];
   defaultChallengeId?: string;
 }) {
+  const t = useT();
   const [state, action] = useActionState(createDuelAction, null);
   const [duration, setDuration] = useState<number>(7);
   const [challengeId, setChallengeId] = useState(defaultChallengeId ?? "");
@@ -28,7 +31,7 @@ export function NewDuelForm({
 
   useEffect(() => {
     if (state?.ok) {
-      toast({ tone: "success", title: state.message ?? "Duel sent" });
+      toast({ tone: "success", title: state.message ?? t("Duel sent") });
       formRef.current?.reset();
     }
   }, [state, toast]);
@@ -39,15 +42,15 @@ export function NewDuelForm({
   const fe = state && !state.ok ? state.fieldErrors : undefined;
   return (
     <form ref={formRef} action={action} className="space-y-4">
-      <Field label="Opponent" htmlFor="opponentId" error={fe?.opponentId}>
+      <Field label={t("Opponent")} htmlFor="opponentId" error={fe?.opponentId}>
         <select id="opponentId" name="opponentId" required className={selectClass} defaultValue="">
           <option value="" disabled>
-            Choose who to challenge
+            {t("Choose who to challenge")}
           </option>
           {(["Friends", "Suggested"] as const).map((g) => {
             const list = opponents.filter((o) => o.group === g);
             return list.length ? (
-              <optgroup key={g} label={g}>
+              <optgroup key={g} label={t(g)}>
                 {list.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.label}
@@ -59,33 +62,33 @@ export function NewDuelForm({
         </select>
       </Field>
       <fieldset>
-        <legend className="mb-2 text-sm font-medium">Duration</legend>
+        <legend className="mb-2 text-sm font-medium">{t("Duration")}</legend>
         <div className="grid grid-cols-3 gap-2">
           {DUEL_DURATIONS.map((d) => (
             <label key={d} className="cursor-pointer">
               <input type="radio" name="durationDays" value={d} checked={duration === d} onChange={() => setDuration(d)} className="peer sr-only" />
               <span className="block rounded-xl py-2.5 text-center text-sm font-semibold ring-1 ring-line transition peer-checked:bg-extreme/15 peer-checked:text-red-200 peer-checked:ring-extreme/40 peer-focus-visible:ring-2 peer-focus-visible:ring-violet-2">
-                {d} days
+                {t.p(d, "{n} day", "{n} days")}
               </span>
             </label>
           ))}
         </div>
       </fieldset>
-      <Field label="Challenge" htmlFor="challengeId" error={fe?.challengeId} hint="Most approved check-ins during the duel wins.">
+      <Field label={t("Challenge")} htmlFor="challengeId" error={fe?.challengeId} hint={t("Most approved check-ins during the duel wins.")}>
         <select id="challengeId" name="challengeId" required className={selectClass} value={challengeId} onChange={(e) => setChallengeId(e.target.value)}>
           <option value="" disabled>
-            {eligible.length ? "Pick a challenge" : "No challenge is long enough"}
+            {eligible.length ? t("Pick a challenge") : t("No challenge is long enough")}
           </option>
           {eligible.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.title} ({c.durationDays}d)
+              {t(c.title)} ({c.durationDays}d)
             </option>
           ))}
         </select>
       </Field>
       {state && !state.ok && <FormAlert>{state.error}</FormAlert>}
-      <SubmitButton className="w-full" variant="danger" pendingText="Sending…" icon={<Swords className="h-4 w-4" />}>
-        Send duel challenge
+      <SubmitButton className="w-full" variant="danger" pendingText={t("Sending…")} icon={<Swords className="h-4 w-4" />}>
+        {t("Send duel challenge")}
       </SubmitButton>
     </form>
   );

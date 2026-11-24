@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import type { ActionResult } from "@/lib/types";
@@ -23,6 +25,7 @@ export function ActionButton({
   successTitle?: string;
   onDone?: (r: ActionResult<unknown>) => void;
 }) {
+  const t = useT();
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
@@ -36,14 +39,14 @@ export function ActionButton({
           try {
             const r = await action();
             if (r.ok) {
-              toast({ tone: "success", title: successTitle ?? r.message ?? "Done", text: successTitle ? r.message : undefined });
+              toast({ tone: "success", title: successTitle ?? r.message ?? t("Done"), text: successTitle ? r.message : undefined });
               router.refresh();
             } else {
               toast({ tone: "error", title: r.error });
             }
             onDone?.(r);
           } catch {
-            toast({ tone: "error", title: "Network error", text: "Check your connection and try again." });
+            toast({ tone: "error", title: t("Network error"), text: t("Check your connection and try again.") });
           }
         });
       }}

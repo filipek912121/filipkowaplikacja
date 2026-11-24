@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { Crown, LayoutTemplate } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -9,9 +10,13 @@ import { getStore } from "@/lib/data";
 import { getEntitlements } from "@/lib/services/entitlements";
 import { friends as getFriends } from "@/lib/services/social";
 
-export const metadata: Metadata = { title: "Create challenge" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Create challenge") };
+}
 
 export default async function CreatePage({ searchParams }: { searchParams: Promise<{ template?: string; squad?: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const sp = await searchParams;
   const store = getStore();
@@ -35,17 +40,17 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHeader eyebrow="Create" title="Design a challenge" subtitle="Set the rules, choose the difficulty and invite your crew." />
+      <PageHeader eyebrow={t("Create")} title={t("Design a challenge")} subtitle={t("Set the rules, choose the difficulty and invite your crew.")} />
       {ent.isPremium ? (
         templates.length > 0 && (
-          <section className="mb-6" aria-label="Your templates">
+          <section className="mb-6" aria-label={t("Your templates")}>
             <p className="mb-2 flex items-center gap-2 text-sm font-medium text-muted">
-              <LayoutTemplate className="h-4 w-4" aria-hidden /> Your templates
+              <LayoutTemplate className="h-4 w-4" aria-hidden />{" "}{t("Your templates")}
             </p>
             <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-              {templates.map((t) => (
-                <Link key={t.id} href={`/create?template=${t.id}`} className="glass flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm hover:border-line-strong">
-                  <DifficultyBadge difficulty={t.difficulty} /> {t.title}
+              {templates.map((tpl) => (
+                <Link key={tpl.id} href={`/create?template=${tpl.id}`} className="glass flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm hover:border-line-strong">
+                  <DifficultyBadge difficulty={tpl.difficulty} /> {tpl.title}
                 </Link>
               ))}
             </div>
@@ -55,7 +60,7 @@ export default async function CreatePage({ searchParams }: { searchParams: Promi
         <Link href="/premium" className="mb-6 flex items-center gap-3 rounded-2xl bg-gold/[0.07] px-4 py-3 text-sm ring-1 ring-gold/20 hover:ring-gold/40">
           <Crown className="h-4 w-4 shrink-0 text-gold" aria-hidden />
           <span className="text-muted">
-            <span className="font-semibold text-fg">Premium</span> unlocks reusable templates and more private challenges.
+            <span className="font-semibold text-fg">{t("Premium")}</span>{" "}{t("unlocks reusable templates and more private challenges.")}
           </span>
         </Link>
       )}

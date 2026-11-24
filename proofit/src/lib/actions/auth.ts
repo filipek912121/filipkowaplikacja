@@ -9,6 +9,7 @@ import { DEMO_USER_ID } from "@/lib/data/demo/seed";
 import { env, isDemoMode } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
+import { localize } from "./run";
 import { signInSchema, signUpSchema, usernameSchema, zodFieldErrors } from "@/lib/validation";
 
 const demoCookieOpts = { httpOnly: true, sameSite: "lax" as const, path: "/", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7 };
@@ -19,12 +20,12 @@ function safeNext(next: FormDataEntryValue | null) {
 }
 
 export async function signInAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
-  if (isDemoMode()) return { ok: false, error: "Demo mode: Supabase isn't configured. Use “Enter demo” instead." };
+  if (isDemoMode()) return localize({ ok: false, error: "Demo mode: Supabase isn't configured. Use “Enter demo” instead." });
   const parsed = signInSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-  if (!parsed.success) return { ok: false, error: "Check your details.", fieldErrors: zodFieldErrors(parsed.error) };
+  if (!parsed.success) return localize({ ok: false, error: "Check your details.", fieldErrors: zodFieldErrors(parsed.error) });
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) return { ok: false, error: error.message === "Email not confirmed" ? "Confirm your email first — check your inbox." : "Invalid email or password." };
+  if (error) return localize({ ok: false, error: error.message === "Email not confirmed" ? "Confirm your email first — check your inbox." : "Invalid email or password." });
   redirect(safeNext(fd.get("next")));
 }
 
@@ -40,15 +41,15 @@ export async function signUpAction(_prev: ActionResult | null, fd: FormData): Pr
     const u = usernameSchema.safeParse(String(fd.get("username") ?? "").toLowerCase());
     const name = String(fd.get("displayName") ?? "").trim();
     if (!u.success || name.length < 2)
-      return { ok: false, error: "Check your details.", fieldErrors: { ...(u.success ? {} : { username: u.error.issues[0].message }), ...(name.length < 2 ? { displayName: "At least 2 characters" } : {}) } };
-    if (await getStore().getProfileByUsername(u.data)) return { ok: false, error: "Username taken.", fieldErrors: { username: "Already taken" } };
+      return localize({ ok: false, error: "Check your details.", fieldErrors: { ...(u.success ? {} : { username: u.error.issues[0].message }), ...(name.length < 2 ? { displayName: "At least 2 characters" } : {}) } });
+    if (await getStore().getProfileByUsername(u.data)) return localize({ ok: false, error: "Username taken.", fieldErrors: { username: "Already taken" } });
     const id = createDemoProfile(u.data, name.slice(0, 40));
     (await cookies()).set(DEMO_COOKIE, id, demoCookieOpts);
     redirect("/dashboard?welcome=1");
   }
-  if (!parsed.success) return { ok: false, error: "Check your details.", fieldErrors: zodFieldErrors(parsed.error) };
+  if (!parsed.success) return localize({ ok: false, error: "Check your details.", fieldErrors: zodFieldErrors(parsed.error) });
   if (await getStore().getProfileByUsername(parsed.data.username))
-    return { ok: false, error: "Username taken.", fieldErrors: { username: "Already taken" } };
+    return localize({ ok: false, error: "Username taken.", fieldErrors: { username: "Already taken" } });
 
   const origin = (await headers()).get("origin") ?? env.siteUrl;
   const supabase = await createSupabaseServerClient();
@@ -61,8 +62,8 @@ export async function signUpAction(_prev: ActionResult | null, fd: FormData): Pr
       data: { username: parsed.data.username, display_name: parsed.data.displayName },
     },
   });
-  if (error) return { ok: false, error: error.message };
-  if (!data.session) return { ok: true, message: "Check your inbox to confirm your email, then log in." };
+  if (error) return localize({ ok: false, error: error.message });
+  if (!data.session) return localize({ ok: true, message: "Check your inbox to confirm your email, then log in." });
   redirect("/dashboard?welcome=1");
 }
 

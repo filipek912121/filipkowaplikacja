@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ProfileView } from "@/components/social/profile-view";
@@ -11,6 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 }
 
 export default async function PublicProfile({ params }: { params: Promise<{ username: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const { username } = await params;
   const user = await getStore().getProfileByUsername(decodeURIComponent(username).slice(0, 20));

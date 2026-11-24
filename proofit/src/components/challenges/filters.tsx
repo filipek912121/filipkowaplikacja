@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -9,6 +11,7 @@ import { Icon } from "@/components/ui/icon";
 import { CATEGORIES, CATEGORY_META, DIFFICULTIES, DIFFICULTY_META } from "@/lib/config/taxonomy";
 
 export function ChallengeFilters() {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -45,44 +48,44 @@ export function ChallengeFilters() {
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden />
           <label htmlFor="challenge-search" className="sr-only">
-            Search challenges
+            {t("Search challenges")}
           </label>
           <input
             id="challenge-search"
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search challenges…"
+            placeholder={t("Search challenges…")}
             className={cn(inputClass, "pl-10")}
             maxLength={80}
           />
         </div>
         <label htmlFor="sort" className="sr-only">
-          Sort
+          {t("Sort")}
         </label>
         <select id="sort" value={sort} onChange={(e) => set("sort", e.target.value === "popular" ? null : e.target.value)} className="w-32 shrink-0 rounded-xl bg-white/[0.04] px-3 py-3 text-sm text-fg ring-1 ring-line focus:outline-none focus:ring-2 focus:ring-violet/60 sm:w-40">
-          <option value="popular">Popular</option>
-          <option value="new">Newest</option>
-          <option value="xp">Most XP</option>
+          <option value="popular">{t("Popular")}</option>
+          <option value="new">{t("Newest")}</option>
+          <option value="xp">{t("Most XP")}</option>
         </select>
       </div>
 
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Filter by difficulty">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t("Filter by difficulty")}>
         <button className={chip(!difficulty)} onClick={() => set("difficulty", null)} aria-pressed={!difficulty}>
-          All levels
+          {t("All levels")}
         </button>
         {DIFFICULTIES.map((d) => (
           <button key={d} className={cn(chip(difficulty === d), difficulty === d && DIFFICULTY_META[d].text)} onClick={() => set("difficulty", difficulty === d ? null : d)} aria-pressed={difficulty === d}>
             <span className={cn("h-2 w-2 rounded-full", DIFFICULTY_META[d].dot)} aria-hidden />
-            {DIFFICULTY_META[d].label}
+            {t(DIFFICULTY_META[d].label)}
           </button>
         ))}
       </div>
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Filter by category">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label={t("Filter by category")}>
         {CATEGORIES.map((c) => (
           <button key={c} className={chip(category === c)} onClick={() => set("category", category === c ? null : c)} aria-pressed={category === c}>
             <Icon name={CATEGORY_META[c].icon} className="h-3.5 w-3.5" />
-            {CATEGORY_META[c].label}
+            {t(CATEGORY_META[c].label)}
           </button>
         ))}
         {(difficulty || category || params.get("q")) && (
@@ -93,7 +96,7 @@ export function ChallengeFilters() {
               start(() => router.replace(pathname, { scroll: false }));
             }}
           >
-            <X className="h-3.5 w-3.5" aria-hidden /> Clear
+            <X className="h-3.5 w-3.5" aria-hidden />{" "}{t("Clear")}
           </button>
         )}
       </div>

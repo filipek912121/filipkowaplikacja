@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/lib/i18n/client";
+
 import { CircleCheck, CircleExclamationPoint, Info, X } from "lucide-react";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { cn } from "./cn";
@@ -15,6 +17,7 @@ interface Toast {
 const Ctx = createContext<{ push: (t: Omit<Toast, "id">) => void } | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const t = useT();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
   const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
@@ -35,24 +38,24 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         aria-live="polite"
         aria-atomic="false"
       >
-        {toasts.map((t) => {
-          const I = t.tone === "success" ? CircleCheck : t.tone === "error" ? CircleExclamationPoint : Info;
+        {toasts.map((item) => {
+          const I = item.tone === "success" ? CircleCheck : item.tone === "error" ? CircleExclamationPoint : Info;
           return (
             <div
-              key={t.id}
+              key={item.id}
               className={cn(
                 "glass-strong pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl p-4 shadow-2xl animate-pop",
-                t.tone === "success" && "ring-1 ring-easy/30",
-                t.tone === "error" && "ring-1 ring-extreme/30",
+                item.tone === "success" && "ring-1 ring-easy/30",
+                item.tone === "error" && "ring-1 ring-extreme/30",
               )}
-              role={t.tone === "error" ? "alert" : "status"}
+              role={item.tone === "error" ? "alert" : "status"}
             >
-              <I className={cn("mt-0.5 h-5 w-5 shrink-0", t.tone === "success" ? "text-easy" : t.tone === "error" ? "text-extreme" : "text-electric")} aria-hidden />
+              <I className={cn("mt-0.5 h-5 w-5 shrink-0", item.tone === "success" ? "text-easy" : item.tone === "error" ? "text-extreme" : "text-electric")} aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{t.title}</p>
-                {t.text && <p className="mt-0.5 text-sm text-muted">{t.text}</p>}
+                <p className="text-sm font-semibold">{item.title}</p>
+                {item.text && <p className="mt-0.5 text-sm text-muted">{item.text}</p>}
               </div>
-              <button onClick={() => dismiss(t.id)} className="text-subtle hover:text-fg" aria-label="Dismiss notification">
+              <button onClick={() => dismiss(item.id)} className="text-subtle hover:text-fg" aria-label={t("Dismiss notification")}>
                 <X className="h-4 w-4" />
               </button>
             </div>

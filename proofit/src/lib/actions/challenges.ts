@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import * as svc from "@/lib/services/challenges";
 import type { ActionResult } from "@/lib/types";
 import { checkInSchema, createChallengeSchema, idSchema, reviewSchema, zodFieldErrors } from "@/lib/validation";
-import { authed } from "./run";
+import { authed, localize } from "./run";
 
 const bool = (v: FormDataEntryValue | null) => v === "on" || v === "true";
 
@@ -25,7 +25,7 @@ export async function createChallengeAction(_prev: ActionResult<{ id: string }> 
     isTemplate: bool(fd.get("isTemplate")),
     xpReward: fd.get("xpReward") || undefined,
   });
-  if (!parsed.success) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: zodFieldErrors(parsed.error) };
+  if (!parsed.success) return localize({ ok: false, error: "Please fix the highlighted fields.", fieldErrors: zodFieldErrors(parsed.error) });
   const res = await authed(async (userId) => {
     const ch = await svc.createChallenge(userId, parsed.data);
     return { ok: true, data: { id: ch.id } };
@@ -39,21 +39,21 @@ export async function createChallengeAction(_prev: ActionResult<{ id: string }> 
 
 export async function joinChallengeAction(challengeId: string): Promise<ActionResult> {
   const id = idSchema.safeParse(challengeId);
-  if (!id.success) return { ok: false, error: "Invalid challenge." };
+  if (!id.success) return localize({ ok: false, error: "Invalid challenge." });
   return authed(async (userId) => {
     await svc.joinChallenge(userId, id.data);
     revalidatePath("/", "layout");
-    return { ok: true, message: "You're in! Your first check-in is today." };
+    return localize({ ok: true, message: "You're in! Your first check-in is today." });
   });
 }
 
 export async function leaveChallengeAction(challengeId: string): Promise<ActionResult> {
   const id = idSchema.safeParse(challengeId);
-  if (!id.success) return { ok: false, error: "Invalid challenge." };
+  if (!id.success) return localize({ ok: false, error: "Invalid challenge." });
   return authed(async (userId) => {
     await svc.leaveChallenge(userId, id.data);
     revalidatePath("/", "layout");
-    return { ok: true, message: "You left the challenge." };
+    return localize({ ok: true, message: "You left the challenge." });
   });
 }
 
@@ -67,7 +67,7 @@ export async function checkInAction(_prev: ActionResult<svc.CheckInResult> | nul
     proofUrl: proofKind === "link" ? (fd.get("proofUrl") as string) || null : null,
     proofText: (fd.get("proofText") as string) || null,
   });
-  if (!parsed.success) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: zodFieldErrors(parsed.error) };
+  if (!parsed.success) return localize({ ok: false, error: "Please fix the highlighted fields.", fieldErrors: zodFieldErrors(parsed.error) });
   const file = fd.get("proofFile");
   return authed(async (userId) => {
     const d = parsed.data;
@@ -86,10 +86,10 @@ export async function checkInAction(_prev: ActionResult<svc.CheckInResult> | nul
 
 export async function reviewProofAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
   const parsed = reviewSchema.safeParse({ proofId: fd.get("proofId"), decision: fd.get("decision"), note: fd.get("note") ?? "" });
-  if (!parsed.success) return { ok: false, error: "Invalid review." };
+  if (!parsed.success) return localize({ ok: false, error: "Invalid review." });
   return authed(async (userId) => {
     await svc.reviewProof(userId, parsed.data.proofId, parsed.data.decision, parsed.data.note);
     revalidatePath("/", "layout");
-    return { ok: true, message: parsed.data.decision === "approve" ? "Proof approved — XP awarded." : "Proof rejected." };
+    return localize({ ok: true, message: parsed.data.decision === "approve" ? "Proof approved — XP awarded." : "Proof rejected." });
   });
 }

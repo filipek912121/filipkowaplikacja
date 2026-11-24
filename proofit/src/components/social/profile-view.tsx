@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { Calendar, CircleCheck, Crown, Flame, Lock, Settings, Target, Trophy, UserCheck, UserPlus, Zap } from "lucide-react";
 import Link from "next/link";
 import { ActionButton } from "@/components/ui/action-button";
@@ -10,10 +11,13 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Icon } from "@/components/ui/icon";
 import { ProgressBar } from "@/components/ui/progress";
 import { followAction } from "@/lib/actions/social";
+import { formatDate, formatNumber } from "@/lib/i18n/core";
 import { levelFromXp, levelTitle } from "@/lib/engine/levels";
 import type { profileOverview } from "@/lib/services/profile";
 
 type Overview = NonNullable<Awaited<ReturnType<typeof profileOverview>>>;
+
+export const STATUS_LABEL = { active: "Active", completed: "Completed", failed: "Failed", left: "Left" } as const;
 
 export const TIER_STYLE = {
   bronze: "from-orange-700/30 to-orange-900/10 text-orange-300 ring-orange-500/30",
@@ -22,7 +26,8 @@ export const TIER_STYLE = {
   legend: "from-violet/40 to-electric/20 text-violet-2 ring-violet/50",
 } as const;
 
-export function ProfileView({ o }: { o: Overview }) {
+export async function ProfileView({ o }: { o: Overview }) {
+  const t = await getT();
   const p = o.profile;
   const lv = levelFromXp(p.xp);
   const unlocked = o.achievements.filter((a) => a.unlockedAt);
@@ -37,27 +42,27 @@ export function ProfileView({ o }: { o: Overview }) {
               <h1 className="font-display text-3xl font-bold">{p.displayName}</h1>
               {o.isPremium && (
                 <Pill tone="gold">
-                  <Crown className="h-3 w-3" aria-hidden /> Premium
+                  <Crown className="h-3 w-3" aria-hidden />{" "}{t("Premium")}
                 </Pill>
               )}
             </div>
             <p className="text-sm text-muted">
-              @{p.username} · {levelTitle(lv.level)} · {o.followers} follower{o.followers === 1 ? "" : "s"} · {o.following} following
+              @{p.username} · {t(levelTitle(lv.level))} · {t.p(o.followers, "{n} follower", "{n} followers")} · {t("{n} following", { n: o.following })}
             </p>
             {p.bio && <p className="mt-2 max-w-xl text-sm">{p.bio}</p>}
           </div>
           <div className="flex gap-2">
             {o.isSelf ? (
               <LinkButton href="/settings" variant="secondary" size="sm" icon={<Settings className="h-4 w-4" />}>
-                Edit profile
+                {t("Edit profile")}
               </LinkButton>
             ) : (
               <>
                 <ActionButton size="sm" variant={o.viewerFollows ? "secondary" : "primary"} action={followAction.bind(null, p.id, !o.viewerFollows)} icon={o.viewerFollows ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}>
-                  {o.viewerFollows ? "Following" : "Follow"}
+                  {o.viewerFollows ? t("Following") : t("Follow")}
                 </ActionButton>
                 <LinkButton href="/duels" size="sm" variant="danger">
-                  Duel
+                  {t("Duel")}
                 </LinkButton>
               </>
             )}
@@ -65,21 +70,21 @@ export function ProfileView({ o }: { o: Overview }) {
         </div>
         <div className="relative mt-6">
           <div className="mb-1.5 flex justify-between text-xs text-muted">
-            <span className="font-semibold text-fg">Level {lv.level}</span>
+            <span className="font-semibold text-fg">{t("Level {n}", { n: lv.level })}</span>
             <span className="tabular-nums">
               {lv.xpIntoLevel}/{lv.xpForLevel} XP
             </span>
           </div>
-          <ProgressBar value={lv.progress} label="Level progress" />
+          <ProgressBar value={lv.progress} label={t("Level progress")} />
         </div>
       </Card>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Stats">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label={t("Stats")}>
         {[
-          { I: Zap, k: "Total XP", v: p.xp.toLocaleString("en"), c: "text-violet-2" },
-          { I: Flame, k: "Streak · best", v: `${o.streak} · ${p.longestStreak}`, c: "text-hard" },
-          { I: Trophy, k: "Completed", v: String(o.completedCount), c: "text-gold" },
-          { I: CircleCheck, k: "Check-ins", v: String(o.totalCheckins), c: "text-easy" },
+          { I: Zap, k: t("Total XP"), v: formatNumber(p.xp, t.locale), c: "text-violet-2" },
+          { I: Flame, k: t("Streak · best"), v: `${o.streak} · ${p.longestStreak}`, c: "text-hard" },
+          { I: Trophy, k: t("Completed"), v: String(o.completedCount), c: "text-gold" },
+          { I: CircleCheck, k: t("Check-ins"), v: String(o.totalCheckins), c: "text-easy" },
         ].map(({ I, k, v, c }) => (
           <Card key={k} className="p-4">
             <I className={cn("h-5 w-5", c)} aria-hidden />
@@ -91,11 +96,11 @@ export function ProfileView({ o }: { o: Overview }) {
 
       <section>
         <SectionTitle
-          title={`Achievements · ${unlocked.length}/${o.achievements.length}`}
+          title={`${t("Achievements")} · ${unlocked.length}/${o.achievements.length}`}
           action={
             o.isSelf && (
               <Link href="/achievements" className="text-sm font-semibold text-violet-2 hover:underline">
-                View all
+                {t("View all")}
               </Link>
             )
           }
@@ -108,17 +113,17 @@ export function ProfileView({ o }: { o: Overview }) {
                 "flex w-28 shrink-0 flex-col items-center rounded-2xl p-3 text-center ring-1 sm:w-auto",
                 a.unlockedAt ? cn("bg-gradient-to-b", TIER_STYLE[a.tier]) : "bg-white/[0.02] text-subtle ring-line",
               )}
-              title={a.description}
+              title={t(a.description)}
             >
               {a.unlockedAt ? <Icon name={a.icon} className="h-7 w-7" /> : <Lock className="h-7 w-7 opacity-50" aria-hidden />}
-              <p className="mt-2 text-xs font-semibold leading-tight">{a.name}</p>
+              <p className="mt-2 text-xs font-semibold leading-tight">{t(a.name)}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section>
-        <SectionTitle title="Challenge history" />
+        <SectionTitle title={t("Challenge history")} />
         {o.history.length ? (
           <Card className="divide-y divide-line">
             {o.history.map(({ participation: pa, challenge: c }) => (
@@ -127,10 +132,10 @@ export function ProfileView({ o }: { o: Overview }) {
                   {pa.status === "completed" ? <CircleCheck className="h-5 w-5" aria-hidden /> : <Target className="h-5 w-5" aria-hidden />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold">{c.title}</span>
+                  <span className="block truncate text-sm font-semibold">{t(c.title)}</span>
                   <span className="flex items-center gap-1 text-xs text-subtle">
-                    <Calendar className="h-3 w-3" aria-hidden /> {new Date(pa.joinedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {pa.checkins}/{c.durationDays} days ·{" "}
-                    <span className="capitalize">{pa.status}</span>
+                    <Calendar className="h-3 w-3" aria-hidden /> {formatDate(pa.joinedAt, t.locale)} · {t("{done}/{total} days", { done: pa.checkins, total: c.durationDays })} ·{" "}
+                    <span>{t(STATUS_LABEL[pa.status])}</span>
                   </span>
                 </span>
                 <DifficultyBadge difficulty={c.difficulty} />
@@ -138,7 +143,7 @@ export function ProfileView({ o }: { o: Overview }) {
             ))}
           </Card>
         ) : (
-          <EmptyState icon={Target} title="No finished challenges yet" text="Completed and past challenges show up here." />
+          <EmptyState icon={Target} title={t("No finished challenges yet")} text={t("Completed and past challenges show up here.")} />
         )}
       </section>
     </div>

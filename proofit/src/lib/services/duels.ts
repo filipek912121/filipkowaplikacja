@@ -76,13 +76,13 @@ export async function createDuel(userId: string, input: { opponentId: string; ch
   if (!ch || !(await canViewChallenge(ch, userId)) || !(await canViewChallenge(ch, opponent.id)))
     throw new AppError("Pick a challenge you can both access.");
   if (ch.durationDays < input.durationDays)
-    throw new AppError(`"${ch.title}" lasts ${ch.durationDays} day(s). Pick a shorter duel or a longer challenge.`);
+    throw new AppError("This challenge lasts {n} day(s). Pick a shorter duel or a longer challenge.", undefined, { n: ch.durationDays });
   const open = (await store.listDuels(userId)).find(
     (d) =>
       (d.status === "pending" || d.status === "active") &&
       [d.challengerId, d.opponentId].includes(opponent.id),
   );
-  if (open) throw new AppError(`You already have an open duel with ${opponent.displayName}.`);
+  if (open) throw new AppError("You already have an open duel with {name}.", undefined, { name: opponent.displayName });
   return store.insertDuel({
     challengerId: userId,
     opponentId: opponent.id,

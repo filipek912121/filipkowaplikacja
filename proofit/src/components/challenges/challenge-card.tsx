@@ -1,18 +1,19 @@
+import { getT } from "@/lib/i18n/server";
 import Link from "next/link";
 import { Calendar, Camera, CircleCheck, Users, Zap } from "lucide-react";
 import { CategoryChip, DifficultyBadge } from "@/components/ui/badges";
 import { cn } from "@/components/ui/cn";
 import { DIFFICULTY_META } from "@/lib/config/taxonomy";
 import type { ChallengeCard as Card } from "@/lib/services/challenges";
+import type { TFn } from "@/lib/i18n/core";
 
-export function durationLabel(days: number) {
-  if (days === 1) return "1 day";
-  if (days === 7) return "1 week";
-  if (days === 30) return "30 days";
-  return `${days} days`;
+export function durationLabel(days: number, t: TFn) {
+  if (days === 7) return t("1 week");
+  return t.p(days, "{n} day", "{n} days");
 }
 
-export function ChallengeCard({ c, index = 0 }: { c: Card; index?: number }) {
+export async function ChallengeCard({ c, index = 0 }: { c: Card; index?: number }) {
+  const t = await getT();
   const m = DIFFICULTY_META[c.difficulty];
   return (
     <Link
@@ -26,28 +27,28 @@ export function ChallengeCard({ c, index = 0 }: { c: Card; index?: number }) {
         <CategoryChip category={c.category} />
         {c.joined && (
           <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-green-300">
-            <CircleCheck className="h-3.5 w-3.5" aria-hidden /> Joined
+            <CircleCheck className="h-3.5 w-3.5" aria-hidden />{" "}{t("Joined")}
           </span>
         )}
       </div>
-      <h3 className="font-display text-lg font-bold leading-snug tracking-tight">{c.title}</h3>
-      <p className="mt-1.5 line-clamp-2 text-sm text-muted">{c.description}</p>
+      <h3 className="font-display text-lg font-bold leading-snug tracking-tight">{t(c.title)}</h3>
+      <p className="mt-1.5 line-clamp-2 text-sm text-muted">{t(c.description)}</p>
       <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-4 text-xs text-muted">
         <span className={cn("inline-flex items-center gap-1 font-bold", m.text)}>
-          <Zap className="h-3.5 w-3.5" aria-hidden /> {c.xpReward} XP/day
+          <Zap className="h-3.5 w-3.5" aria-hidden /> {t("{n} XP/day", { n: c.xpReward })}
         </span>
         <span className="inline-flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" aria-hidden /> {durationLabel(c.durationDays)}
+          <Calendar className="h-3.5 w-3.5" aria-hidden /> {durationLabel(c.durationDays, t)}
         </span>
         <span className="inline-flex items-center gap-1">
           <Users className="h-3.5 w-3.5" aria-hidden /> {c.participants}
         </span>
         {c.requiresProof && (
           <span className="inline-flex items-center gap-1">
-            <Camera className="h-3.5 w-3.5" aria-hidden /> Proof
+            <Camera className="h-3.5 w-3.5" aria-hidden />{" "}{t("Proof")}
           </span>
         )}
-        <span className="ml-auto truncate text-subtle">by {c.creatorName ?? "a member"}</span>
+        <span className="ml-auto truncate text-subtle">{t("by {name}", { name: c.creatorName ?? t("a member") })}</span>
       </div>
     </Link>
   );

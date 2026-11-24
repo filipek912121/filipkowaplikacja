@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { Swords } from "lucide-react";
 import type { Metadata } from "next";
 import { DuelCard } from "@/components/social/duel-card";
@@ -10,9 +11,13 @@ import { exploreChallenges } from "@/lib/services/challenges";
 import { listDuels } from "@/lib/services/duels";
 import { friends, leaderboard } from "@/lib/services/social";
 
-export const metadata: Metadata = { title: "Duels" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return { title: t("Duels") };
+}
 
 export default async function DuelsPage({ searchParams }: { searchParams: Promise<{ challenge?: string }> }) {
+  const t = await getT();
   const me = await requireUser();
   const { challenge } = await searchParams;
   const [duels, myFriends, top, challenges] = await Promise.all([listDuels(me.id), friends(me.id), leaderboard(me.id, "global", "week"), exploreChallenges(me.id, {})]);
@@ -32,22 +37,22 @@ export default async function DuelsPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader eyebrow="Duels" title="Head-to-head" subtitle={`Challenge someone directly. Winner takes bonus XP. Your record: ${wins} win${wins === 1 ? "" : "s"}.`} />
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+      <PageHeader eyebrow={t("Duels")} title={t("Head-to-head")} subtitle={`${t("Challenge someone directly. Winner takes bonus XP.")} ${t("Your record:")} ${t.p(wins, "{n} win", "{n} wins")}.`} />
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
           <section>
-            <SectionTitle title="Live" />
-            {active.length ? <div className="grid gap-3 sm:grid-cols-2">{active.map((v) => <DuelCard key={v.duel.id} v={v} />)}</div> : <EmptyState icon={Swords} title="No live duels" text="Send a challenge — it goes live when they accept." />}
+            <SectionTitle title={t("Live")} />
+            {active.length ? <div className="grid gap-3 sm:grid-cols-2">{active.map((v) => <DuelCard key={v.duel.id} v={v} />)}</div> : <EmptyState icon={Swords} title={t("No live duels")} text={t("Send a challenge — it goes live when they accept.")} />}
           </section>
           {pending.length > 0 && (
             <section>
-              <SectionTitle title="Pending" />
+              <SectionTitle title={t("Pending")} />
               <div className="grid gap-3 sm:grid-cols-2">{pending.map((v) => <DuelCard key={v.duel.id} v={v} />)}</div>
             </section>
           )}
           {done.length > 0 && (
             <section>
-              <SectionTitle title="History" />
+              <SectionTitle title={t("History")} />
               <div className="grid gap-3 sm:grid-cols-2">{done.map((v) => <DuelCard key={v.duel.id} v={v} />)}</div>
             </section>
           )}
@@ -55,7 +60,7 @@ export default async function DuelsPage({ searchParams }: { searchParams: Promis
         <aside className="lg:sticky lg:top-8 lg:self-start">
           <Card glow className="p-5">
             <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold">
-              <Swords className="h-5 w-5 text-extreme" aria-hidden /> New duel
+              <Swords className="h-5 w-5 text-extreme" aria-hidden />{" "}{t("New duel")}
             </h2>
             <NewDuelForm opponents={opponents} challenges={duelable.map((c) => ({ id: c.id, title: c.title, durationDays: c.durationDays }))} defaultChallengeId={validDefault} />
           </Card>

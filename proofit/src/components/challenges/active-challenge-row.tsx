@@ -1,3 +1,4 @@
+import { getT } from "@/lib/i18n/server";
 import { ChevronRight, CircleCheck, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { DifficultyBadge } from "@/components/ui/badges";
@@ -5,7 +6,8 @@ import { cn } from "@/components/ui/cn";
 import { ProgressBar } from "@/components/ui/progress";
 import type { ActiveChallenge } from "@/lib/services/challenges";
 
-export function ActiveChallengeRow({ a }: { a: ActiveChallenge }) {
+export async function ActiveChallengeRow({ a }: { a: ActiveChallenge }) {
+  const t = await getT();
   const { challenge: c, participation: p } = a;
   return (
     <Link
@@ -23,7 +25,7 @@ export function ActiveChallengeRow({ a }: { a: ActiveChallenge }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate font-semibold">{c.title}</p>
+          <p className="truncate font-semibold">{t(c.title)}</p>
           <DifficultyBadge difficulty={c.difficulty} className="hidden sm:inline-flex" />
         </div>
         <div className="mt-2 flex items-center gap-3">
@@ -34,14 +36,14 @@ export function ActiveChallengeRow({ a }: { a: ActiveChallenge }) {
         </div>
         <p className="mt-1.5 text-xs text-subtle">
           {a.todayStatus === "approved"
-            ? "Done for today ✓"
+            ? t("Done for today ✓")
             : a.todayStatus === "pending"
-              ? "Proof pending verification"
-              : `Day ${a.dayNumber} of ${c.durationDays} · ${a.daysLeft === 0 ? "last day!" : `${a.daysLeft} day${a.daysLeft === 1 ? "" : "s"} left`}`}
+              ? t("Proof pending verification")
+              : `${t("Day {n} of {total}", { n: a.dayNumber, total: c.durationDays })} · ${a.daysLeft === 0 ? t("last day!") : t.p(a.daysLeft, "{n} day left", "{n} days left")}`}
         </p>
       </div>
       {!a.checkedInToday ? (
-        <span className="hidden shrink-0 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white sm:inline">Check in</span>
+        <span className="hidden shrink-0 rounded-xl bg-brand px-3.5 py-2 text-xs font-semibold text-white sm:inline">{t("Check in")}</span>
       ) : (
         <ChevronRight className="h-5 w-5 shrink-0 text-subtle transition group-hover:translate-x-0.5 group-hover:text-fg" aria-hidden />
       )}

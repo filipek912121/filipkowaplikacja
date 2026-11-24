@@ -159,8 +159,9 @@ export async function createChallenge(userId: string, input: CreateChallengeInpu
   const safety = screenChallengeText(input.title, input.description, ...input.tasks);
   if (!safety.ok)
     throw new AppError(
-      `PROOFIT doesn't allow challenges involving ${safety.reason}. Keep it challenging, but safe.`,
+      "PROOFIT doesn't allow challenges involving {reason}. Keep it challenging, but safe.",
       { description: "This challenge may encourage unsafe behaviour." },
+      { reason: safety.reason },
     );
   const ent = await getEntitlements(userId);
   if (input.isTemplate && !ent.limits.customTemplates) throw new AppError("Custom challenge templates are a Premium feature.");
@@ -168,7 +169,7 @@ export async function createChallenge(userId: string, input: CreateChallengeInpu
     const mine = await store.listChallenges({ creatorId: userId });
     const privateCount = mine.filter((c) => c.creatorId === userId && c.visibility === "private").length;
     if (privateCount >= ent.limits.maxPrivateChallenges)
-      throw new AppError(`Free accounts can have ${ent.limits.maxPrivateChallenges} private challenge. Upgrade to Premium for more.`);
+      throw new AppError("Free accounts can have {n} private challenge. Upgrade to Premium for more.", undefined, { n: ent.limits.maxPrivateChallenges });
   }
   if (input.squadId) {
     const member = (await store.listSquadMembers({ squadId: input.squadId, userId })).length > 0;
@@ -231,8 +232,10 @@ export async function joinChallenge(userId: string, challengeId: string): Promis
   if (active >= ent.limits.maxActiveChallenges)
     throw new AppError(
       ent.isPremium
-        ? `You're at the ${ent.limits.maxActiveChallenges} active challenge limit. Finish one first.`
-        : `Free plan allows ${ent.limits.maxActiveChallenges} active challenges. Finish one or upgrade to Premium.`,
+        ? "You're at the {n} active challenge limit. Finish one first."
+        : "Free plan allows {n} active challenges. Finish one or upgrade to Premium.",
+      undefined,
+      { n: ent.limits.maxActiveChallenges },
     );
 
   const joinedAt = new Date().toISOString();
@@ -294,7 +297,7 @@ export async function checkIn(userId: string, input: CheckInInput): Promise<Chec
   if (today < startDay || today > lastDay) throw new AppError("Check-ins are closed for this challenge window.");
 
   const missing = ch.tasks.filter((t) => !input.tasksDone.includes(t));
-  if (missing.length) throw new AppError("Complete every daily task before checking in.", { tasks: `Still to do: ${missing[0]}` });
+  if (missing.length) throw new AppError("Complete every daily task before checking in.", { tasks: "Complete every daily task before checking in." });
 
   // Validate proof
   if (ch.requiresProof) {
