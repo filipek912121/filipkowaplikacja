@@ -1,0 +1,37 @@
+{
+  "name": "proofit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PROOFIT — Challenge. Compete. Win.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.78.0",
+    "next": "^16.4.6",
+    "react": "19.2",
+    "react-dom": "19.2",
+    "server-only": "^0.0.1",
+    "stripe": "^23.2.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.5",
+    "tsx": "^4.23.15",
+    "typescript": "5.9"
+  }
+}
